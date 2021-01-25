@@ -35,7 +35,7 @@ def scrape_data(country):
         print('\n' + 10*'=' + f' {country} dataframe created ' + 10*'=')
         export(df)
         print('\n' + 10*'=' + f' {country} dataframe exported ' + 10*'=')
-    except KeyError as err:
+    except KeyError or IndexError as err:
         print(err)
         print(country)
         UNAVAILABLE.append(country)
@@ -46,7 +46,6 @@ def main():
     # Next 3 lines create that list
     URL = 'https://api.covid19api.com/countries'
     res = requests.get(URL).json()
-    time.sleep(2)
     global COUNTRIES
     COUNTRIES = [res[i]['Slug'] for i in range(len(res))]
     # Creating the DataFrames
