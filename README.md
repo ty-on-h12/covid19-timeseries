@@ -23,6 +23,11 @@ it's structure is perfect for some JavaScript web app, but with <a href='https:/
 *If you would like you can get that data by creating folder **data** and running **scrape.py** - scraping takes some time due to request limit from Postman.*
 
 # Data exploration
+CASES CHARTS: 
+<p align='center'>
+  <img tile='Sample charts' src='https://github.com/ty-on-h12/covid19-timeseries/blob/master/utils/sample_chart.png'>
+</p>
+AUTOCORRELATION CHARTS:
 
 # Modeling
 
