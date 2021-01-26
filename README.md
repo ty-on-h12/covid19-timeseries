@@ -7,7 +7,10 @@
 * App deployment
 
 # Project overview
-**Covid19 forecasting build using ARIMA / Prophet. Using data scraped from Postman. Deployed on Streamlit**
+**Covid19 forecasting build using ARIMA / Prophet. Using data scraped from Postman. Deployed on Streamlit.**
+
+**Introduction**
+
 Some time ago I've found <a href='https://documenter.getpostman.com/view/10808728/SzS8rjbc'><b>this</b></a> API, 
 it's structure is perfect for some JavaScript web app, but with <a href='https://requests.readthedocs.io/en/master/'><i>requests</i></a> and <a href='https://pandas.pydata.org/'><i>pandas</i></a> I scraped it and I've put it into DataFrames, so this data can be easily manipulated and modeled. Data is organized into csv files - each file for each country. I've done it this way, becouse with files organized in such structure it is easy to create machine learning pipelines. <br> **Pipeline overview:**
 * Data preprocessing and aggregation
@@ -15,7 +18,9 @@ it's structure is perfect for some JavaScript web app, but with <a href='https:/
 * Training
 * Deploying<br>
 
-*Check jupyter notebook for details*
+*Check jupyter notebook for details.*
+
+*If you would like you can get that data by creating folder **data** and running **scrape.py** - scraping takes some time due to request limit from Postman.*
 
 # Data exploration
 
