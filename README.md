@@ -27,6 +27,12 @@ CASES CHARTS:
 <p align='center'>
   <img src='https://github.com/ty-on-h12/covid19-timeseries/blob/master/utils/sample_chart.jpg' title="Sample charts">
 </p>
+<p align='center'>
+  <img src='https://github.com/ty-on-h12/covid19-timeseries/blob/master/utils/seasonal.jpg' title="Sample charts">
+</p>
+<p align='center'>
+  <img src='https://github.com/ty-on-h12/covid19-timeseries/blob/master/utils/roll.jpg' title="Sample charts">
+</p>
 AUTOCORRELATION CHARTS:
 
 # Modeling
