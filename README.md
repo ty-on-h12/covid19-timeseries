@@ -25,7 +25,7 @@ it's structure is perfect for some JavaScript web app, but with <a href='https:/
 # Data exploration
 CASES CHARTS: 
 <p align='center'>
-  <img tile='Sample charts' src='https://github.com/ty-on-h12/covid19-timeseries/blob/master/utils/sample_chart.png'>
+  <embed src='https://github.com/ty-on-h12/covid19-timeseries/blob/master/sample_chart.pdf' type="application/pdf">
 </p>
 AUTOCORRELATION CHARTS:
 
