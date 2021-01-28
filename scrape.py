@@ -11,7 +11,6 @@ UNAVAILABLE = []
 # Export funtion => exports DataFrames to CSV files for further use in data analysis
 def export(dataframe, country):
     # Each CSV file is going to be named after it's country
-    dataframe.drop(['Unnamed: 0'], axis=1 ,inplace=True)
     dataframe.to_csv('./data/{}.csv'.format(country))
 
 # Funtion to scrape data and put it nicely in a Pandas DataFrame
@@ -28,6 +27,10 @@ def scrape_data(country):
         print(err)
         print(URL + ' is unavailable')
         UNAVAILABLE.append(country)
+    # Skipping unavailable data
+    if len(res) < 200:
+        UNAVAILABLE.append(country)
+        return 
     # Try/Except becouse requesting sometimes throws an error ( due to limits )
     try:
         # Step III - List comprehension to get lists of 1. Cases, 2. Dates, 3. Current country
