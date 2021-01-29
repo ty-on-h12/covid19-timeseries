@@ -28,7 +28,7 @@ def scrape_data(country):
         print(URL + ' is unavailable')
         UNAVAILABLE.append(country)
     # Skipping unavailable data
-    if len(res) < 200:
+    if res.shape[0] < 200:
         UNAVAILABLE.append(country)
         return 
     # Try/Except becouse requesting sometimes throws an error ( due to limits )
