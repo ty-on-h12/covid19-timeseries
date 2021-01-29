@@ -67,9 +67,9 @@ it's structure is perfect for some JavaScript web app, but with <a href='https:/
 
 At first I was considering using a recurrent neural network for this forecast, but after reading <a href='https://arxiv.org/pdf/1909.00590.pdf'><b>this</b></a> great article and considering univariate nature of my dataset I've chosen to evaluate between **ARIMA** and **Prophet** (both models are covered in jupyter notebook). 
 
-**ARIMA results:**
-
-**Prophet results:**
+**You can see results on the website.**
 
 # App deployment
-**Only a few days ago I've found Streamlit (my previouse candidate was Dash), and after reading about it I've decided that this is the tool that I'll use for deployment.** For easy deployment of machine learning web apps Streamlit is very powerful, Dash may be more robust and generally better for big apps, but for my purpose with this project Streamlit was more than enough to satisfy my needs. Link to Streamlit's <a href='https://www.streamlit.io/'>website</a>.
+**Only a few days ago I've found Streamlit (my previouse candidate was Dash), and after reading about it I've decided that this is the tool that I'll use for deployment.** For easy deployment of machine learning web apps Streamlit is very powerful, Dash may be more robust and generally better for big apps, but for my purpose with this project Streamlit was more than enough to satisfy my needs. Link to Streamlit's <a href='https://www.streamlit.io/'>website</a>. All the code for website is in app.py, global.py creates .csv for map chart, scrape.py scrapes data from Postman (which has a tendency to be unavaliable very frequently). If you would like to use this repo, just clone it, create folders: data and preds (scrape.py and global.py expect this folders to store data) and run my scripts. I belive I've commented my code well enough to get going right away :)
+
+Link to the website : 
