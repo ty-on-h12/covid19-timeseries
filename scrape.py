@@ -23,12 +23,12 @@ def scrape_data(country):
     try:
         # Step II - get request to the url, response to JSON
         res = requests.get(URL.format(country)).json()
-    except ConnectionError or ValueError as err:
-        print(err)
+    except:
         print(URL + ' is unavailable')
         UNAVAILABLE.append(country)
+        return
     # Skipping unavailable data
-    if res.shape[0] < 200:
+    if len(res) < 200:
         UNAVAILABLE.append(country)
         return 
     # Try/Except becouse requesting sometimes throws an error ( due to limits )

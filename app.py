@@ -49,12 +49,12 @@ def preprocess(data, for_model):
     dataset['New_casse'] = dataset['New_cases'].interpolate(method='polynomial', order=3)
     dataset['Cummulative_cases'] = dataset['Cummulative_cases'].interpolate(method='linear')
     dataset = dataset.fillna(0)
-    print(dataset['Cummulative_cases'])
+    print(dataset.isna())
     return dataset['New_cases'], dataset['Cummulative_cases']
 
-def create_model(data, future, ar=2): 
+def create_model(data, future, order=(2,1,2)): 
     # Parametrized ARIMA, some datasets need bigger p to work properly
-    model = ARIMA(data, order=(ar,1,2))
+    model = ARIMA(data, order=order)
     model = model.fit()
     preds = model.predict(start=1, end=future, typ='levels')
     # Returning exp to reverse the log
@@ -106,6 +106,7 @@ countries_dict = dict(zip(countries_map, countries))
 
 st.title('Welcome to Covid19 Forecast!')
 st.write("""**Explore the future of Covid19 by playing around with interactive plots and statistical time series modeling methods: FBProphet and ARIMA.**""")
+st.write("""**NOTE: This is the first release of this application, and there still may be some bugs, if you find any, please let me know via GitHub. All help appreciated :)**""")
 st.markdown("For code <a href='https://github.com/ty-on-h12/covid19-timeseries'><b>check out my GitHub</b></a>", unsafe_allow_html=True)
 st.write('Forecast available for {} countries!'.format(len(countries_map)))
 usr_input = st.text_input('Check if a country is available', value='')
@@ -138,10 +139,20 @@ if MODEL == 'ARIMA':
     try:
         preds = create_model(preprocessed, period)
     except ValueError:
-        preds = create_model(preprocessed, period, ar=4)
-
+        try:
+            preds = create_model(preprocessed, period, order=(4,1,2))
+        except:
+            preds = create_model(preprocessed, period, order=(0,1,2))
     dates_for_lin_reg = preds.index
-    preds_cummulative = create_model(preprocessed_lin_reg, period)
+    
+    try:
+        preds_cummulative = create_model(preprocessed_lin_reg, period)
+    except ValueError:
+        try:
+            preds_cummulative = create_model(preprocessed_lin_reg, period, order=(4,1,2))
+        except:
+            preds_cummulative = create_model(preprocessed_lin_reg, period, order=(0,1,2))
+
     # Plotly figure new
     st.write("""Plot for **new** cases:""")
     fig = go.Figure()
