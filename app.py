@@ -82,13 +82,9 @@ countries = tuple(list(os.walk(DIR))[0][2])
 countries_map = [x.replace('-', ' ')[:-4].capitalize() for x in countries]
 countries_dict = dict(zip(countries_map, countries))
 
-st.title('Welcome to Covid19 Forecast!')
-st.write("""**Explore the future of Covid19 by playing around with interactive plots and statistical time series modeling methods: FBProphet and ARIMA.**""")
-st.write("""**NOTE: Due to the way Prophet model was designed it's performance on some of the countries is very poor, for others though it works respectevily.
-Considering this I recomend trying out both models. From my experience Prophet may be better sometimes, but it is much more unstable when trained on a small dataset (Covid19 cases being a perfect example), 
-ARIMA on the other hand, isn't as precise, but it's results are much more stable.**
-
-This is the first release of this application, and there still may be some bugs, if you find any, please let me know via GitHub. All help appreciated :)""")
+st.title('Covid19 Forecast')
+st.write("""**Explore the future of Covid19 by playing around with interactive plots made using time series modeling methods: FBProphet and ARIMA.**""")
+st.write("""**NOTE: I do not claim my forecasts to be very accurate, in fact some of them are completly off.**""")
 st.markdown("For code <a href='https://github.com/ty-on-h12/covid19-timeseries'><b>check out my GitHub</b></a>", unsafe_allow_html=True)
 st.write('Forecast available for {} countries!'.format(len(countries_map)))
 usr_input = st.text_input('Check if a country is available', value='')
@@ -110,9 +106,7 @@ else:
     preprocessed, preprocessed_c = preprocess(DIR + countries_dict[country], for_model='Prophet')
 
 st.write("""*Period* represents week since a country began to collect Covid19 statistics, for example period 50 means 50th week. 
-**Forecasts range from the next week to the next 12 weeks, you can easily adjust the range with a slider below. 
-Higher bounds are not provieded since forecasts have much lower accuracy over a long period of time.** 
-Data is spread on a **weekly** basis, meaning that each data point represents **sum** of either new or cumulative cases per week.""")
+**Minimal forecast time is 1 week , maximal 12th week.""")
 period = st.slider('Select period', min_value=len(preprocessed), max_value=len(preprocessed)+12)
 
 st.title('Forcast for {}'.format(country))
@@ -184,7 +178,7 @@ else:
 
 st.title("Global forecast")
 st.write("**Zoom, rotate and mouseover to interact with the map!**")
-st.write("""**NOTE**: Due to computational efficiency global forecast is at the moment only available for ARIMA model.""")
+# st.write("""**NOTE**: Due to computational efficiency global forecast is at the moment only available for ARIMA model.""")
 
 df = pd.read_csv(PREDS + 'global.csv')
 full_countries = [cmap for cmap, c in countries_dict.items()]
@@ -248,3 +242,5 @@ else:
 
     **For code and implemenation details visit my <a href='https://github.com/ty-on-h12/covid19-timeseries'><b>GitHub repo</b></a>.**
     """, unsafe_allow_html=True)
+
+st.write("""**If've found any bugs, feel free to let me know via GitHub.**""")
