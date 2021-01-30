@@ -35,22 +35,21 @@ def preprocess(data, for_model):
     # Becouse new_cases is shorter by 1 we need to drop last row of the dataset
     dataset.drop(dataset.tail(1).index, inplace=True)
     dataset['New_cases'] = new_cases
-    dataset = dataset.rename(columns={'Cases' : 'Cummulative_cases'})
+    dataset = dataset.rename(columns={'Cases' : 'Cumulative_cases'})
     # Agreggating
-    dataset = dataset.groupby(pd.Grouper(key='Date',freq='W-MON')).agg({'New_cases':'sum','Cummulative_cases':'sum'})
+    dataset = dataset.groupby(pd.Grouper(key='Date',freq='W-MON')).agg({'New_cases':'sum','Cumulative_cases':'sum'})
     dataset = dataset.reset_index()
     # Let the index be "Date"
     dataset = dataset.set_index('Date')
-    # if for_model == 'ARIMA':
     # Stationarizing the dataset
     dataset = np.log(dataset)
     dataset = dataset.replace(np.NINF, np.NAN)
     # Interpolate to handle nans
     dataset['New_casse'] = dataset['New_cases'].interpolate(method='polynomial', order=3)
-    dataset['Cummulative_cases'] = dataset['Cummulative_cases'].interpolate(method='linear')
+    dataset['Cumulative_cases'] = dataset['Cumulative_cases'].interpolate(method='linear')
     dataset = dataset.fillna(0)
     print(dataset.isna())
-    return dataset['New_cases'], dataset['Cummulative_cases']
+    return dataset['New_cases'], dataset['Cumulative_cases']
 
 def create_model(data, future, order=(2,1,2)): 
     # Parametrized ARIMA, some datasets need bigger p to work properly
@@ -59,28 +58,6 @@ def create_model(data, future, order=(2,1,2)):
     preds = model.predict(start=1, end=future, typ='levels')
     # Returning exp to reverse the log
     return np.exp(preds)
-
-
-# REDUNDANT FUNCTION - REMOVE IN NEXT COMMIT 
-def linear_regression(data, dates_to_predict):
-    # Statsmodels implementation of linear regression
-    # Converting dates to ordinal
-    idx = pd.to_datetime(data.index)
-    idx = [datetime.datetime.toordinal(date) for date in list(idx)]
-    # Fitting the model
-    lin_reg = sm.OLS(list(data.values), list(idx), formula='Cummulative_cases ~ np.power(Cummulative_cases, 2)')
-    res = lin_reg.fit()
-    # Converting dates to predict to ordinal
-    dates_to_predict = pd.to_datetime(dates_to_predict)
-    dates_to_predict = [datetime.datetime.toordinal(date) for date in list(dates_to_predict)]
-    # Predicting
-    preds = res.predict(np.squeeze(np.asarray(dates_to_predict)))
-    # Back to date
-    DATES = [datetime.datetime.fromordinal(date) for date in list(dates_to_predict)]
-    # Results into series
-    cummulative_series = pd.Series(data=np.exp(preds), index=DATES)
-    return cummulative_series
-
 
 def prophet(data, periods, ys=True):
     # Prophet requires to use special DataFrame template
@@ -123,12 +100,12 @@ country = st.selectbox('Select country', (sorted(countries_map)))
 MODEL  = st.selectbox('Select model', ('ARIMA', 'Prophet'))
 
 if MODEL == 'ARIMA':
-    preprocessed, preprocessed_lin_reg = preprocess(DIR + countries_dict[country], for_model='ARIMA')
+    preprocessed, preprocessed_c = preprocess(DIR + countries_dict[country], for_model='ARIMA')
 else:
-    preprocessed, preprocessed_lin_reg = preprocess(DIR + countries_dict[country], for_model='Prophet')
+    preprocessed, preprocessed_c = preprocess(DIR + countries_dict[country], for_model='Prophet')
 
 st.write("""*Period* represents week since a country began to collect Covid19 statistics, for example period 50 means 50th week. 
-Lowest bound is next week and the highest is next 12 weeks. 
+**Forecasts range from the next week to the next 12 weeks, you can easily adjust the range with a slider below. 
 **Higher bounds are not provieded since forecasts have much lower accuracy over a long period of time.** 
 Data is spread on a **weekly** basis, meaning that each data point represents **sum** of either new or cummulative cases per week.""")
 period = st.slider('Select period', min_value=len(preprocessed), max_value=len(preprocessed)+12)
@@ -143,53 +120,65 @@ if MODEL == 'ARIMA':
             preds = create_model(preprocessed, period, order=(4,1,2))
         except:
             preds = create_model(preprocessed, period, order=(0,1,2))
-    dates_for_lin_reg = preds.index
+    DATES = preds.index
     
     try:
-        preds_cummulative = create_model(preprocessed_lin_reg, period)
+        preds_cumulative = create_model(preprocessed_c, period)
     except ValueError:
         try:
-            preds_cummulative = create_model(preprocessed_lin_reg, period, order=(4,1,2))
+            preds_cumulative = create_model(preprocessed_c, period, order=(4,1,2))
         except:
-            preds_cummulative = create_model(preprocessed_lin_reg, period, order=(0,1,2))
+            preds_cumulative = create_model(preprocessed_c, period, order=(0,1,2))
 
     # Plotly figure new
     st.write("""Plot for **new** cases:""")
     fig = go.Figure()
     fig.add_scatter(x=preds.index, y=preds.values, name='Forecast')
-    fig.add_scatter(x=preprocessed.index, y=np.exp(preprocessed.values), name='Real')
-    fig.update_layout(template='simple_white', width=750, height=400, margin=dict(l=20, r=20, t=20, b=20))
+    fig.add_scatter(x=preprocessed.index, 
+        y=np.exp(preprocessed.values), 
+        name='Real') 
+        # labels={preprocessed.index:'Date', preprocessed['']:"New cases"})
+    fig.update_layout(template='simple_white', width=750, height=300, margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
+    # fig.update_xaxes(rangeslider_visible=True)
     fig.update_traces({"line":{'width':3}})
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    # Plotly figure cummulative
-    st.write("""Plot for **cummulative** cases:""")
-    fig_reg = go.Figure()
-    fig_reg.add_scatter(x=preds_cummulative.index, y=preds_cummulative, name='Forecast')
-    fig_reg.add_scatter(x=preprocessed_lin_reg.index, y=np.exp(preprocessed_lin_reg.values), name='Real')
-    fig_reg.update_layout(template='simple_white', width=750, height=400, margin=dict(l=20, r=20, t=20, b=20))
-    fig_reg.update_traces({"line":{'width':3}})
-    st.plotly_chart(fig_reg)
+    # Plotly figure cumulative
+    st.write("""Plot for **cumulative** cases:""")
+    fig_2 = go.Figure()
+    fig_2.add_scatter(x=preds_cumulative.index, y=preds_cumulative, name='Forecast')
+    fig_2.add_scatter(x=preprocessed_c.index, 
+        y=np.exp(preprocessed_c.values), 
+        name='Real')
+        # labels={preprocessed_c.index:'Date', preprocessed_c.values:"New cases"})
+    fig_2.update_layout(template='simple_white', width=750, height=300, margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
+    # fig_2.update_xaxes(rangeslider_visible=True)
+    fig_2.update_traces({"line":{'width':3}})
+    st.plotly_chart(fig_2, use_container_width=True, config={"displayModeBar": False})
 
 else:
+    # Plotly figure new
     preds = prophet(preprocessed, period)
-    fig = plot_plotly(preds[0], preds[1])
-    fig.add_scatter(x=preprocessed.index, y=np.exp(preprocessed.values), name='Real')
-    fig.update_layout(template='simple_white', width=750, height=400, margin=dict(l=20, r=20, t=20, b=20))
+    preds[0].history['y'] = np.exp(preds[0].history['y']) 
+    fig = plot_plotly(preds[0], preds[1], xlabel='Date', ylabel='New cases')
+    fig.update_layout(template='simple_white', width=750, height=450, margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
+    fig.update_xaxes(rangeslider_visible=False)
     fig.update_traces({"line":{'width':1.5}})
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-    preds_cummulative = prophet(preprocessed_lin_reg, period, ys=False)    
-    fig_2 = plot_plotly(preds_cummulative[0], preds_cummulative[1])
-    fig_2.add_scatter(x=preprocessed_lin_reg.index, y=np.exp(preprocessed_lin_reg.values), name='Real')
-    fig_2.update_layout(template='simple_white', width=750, height=400, margin=dict(l=20, r=20, t=20, b=20))
+    # Plotly figure cummulative
+    preds_cumulative = prophet(preprocessed_c, period, ys=False)
+    preds_cumulative[0].history['y'] = np.exp(preds_cumulative[0].history['y'])     
+    fig_2 = plot_plotly(preds_cumulative[0], preds_cumulative[1], xlabel='Date', ylabel='Cummulative cases')
+    fig_2.update_layout(template='simple_white', width=750, height=450, margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
+    fig_2.update_xaxes(rangeslider_visible=False)
     fig_2.update_traces({"line":{'width':1.5}})
-    st.plotly_chart(fig_2)
- 
+    st.plotly_chart(fig_2, use_container_width=True, config={"displayModeBar": False})
 
 # Plotly map
 
 st.title("Global forecast")
+st.write("**Zoom, rotate and mouseover to interact with the map!**")
 st.write("""**NOTE**: Due to computational efficiency global forecast is at the moment only available for ARIMA model.""")
 
 df = pd.read_csv(PREDS + 'global.csv')
@@ -203,14 +192,14 @@ df['iso_alpha'] = df['country'].map(dict(zip(full_countries, codes)))
 df = df[pd.to_datetime(df['date']) > '2020-05-01']
 df = df.dropna()
 
-fig_2 = px.choropleth(df, locations="iso_alpha",
+fig_3 = px.choropleth(df, locations="iso_alpha",
                      hover_name="country", 
                      color="cases",
                      animation_frame="date",
                      color_continuous_scale='Blues',
-                     projection="natural earth")
-fig_2.update_layout(margin=dict(l=20, r=20, t=20, b=20))
-st.plotly_chart(fig_2)
+                     projection="natural earth", height=400)
+fig_3.update_layout(margin=dict(l=20, r=20, t=0, b=0), coloraxis_showscale=False)
+st.plotly_chart(fig_3, use_container_width=True, config={"displayModeBar": False})
 
 # Markdown
 
@@ -251,5 +240,6 @@ else:
     * $e(t)$ - Error term, used in case of unusual data   
 
     **For theory details I recommend visiting <a href='https://research.fb.com/blog/2017/02/prophet-forecasting-at-scale/'>Facebook's official site</a>.**
+
     **For code and implemenation details visit my <a href='https://github.com/ty-on-h12/covid19-timeseries'><b>GitHub repo</b></a>.**
     """, unsafe_allow_html=True)
