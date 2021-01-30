@@ -42,6 +42,7 @@ def preprocess(data, for_model):
     # Let the index be "Date"
     dataset = dataset.set_index('Date')
     # Stationarizing the dataset
+    # if for_model=='ARIMA':
     dataset = np.log(dataset)
     dataset = dataset.replace(np.NINF, np.NAN)
     # Interpolate to handle nans
@@ -66,7 +67,7 @@ def prophet(data, periods, ys=True):
     p_data = p_data.rename(columns={cols[0] : 'ds', cols[1] : 'y'})
     # Instantiating Prophet class
     prophet = Prophet(yearly_seasonality=ys, changepoint_prior_scale=0.1, interval_width=0.95)
-    prophet.add_seasonality(name='monthly', period=30.5, fourier_order=3, prior_scale=0.1)
+    prophet.add_seasonality(name='monthly', period=30, fourier_order=3, prior_scale=0.1)
     prophet.fit(p_data)
     future = prophet.make_future_dataframe(periods=periods)
     forecast = prophet.predict(future)
@@ -83,7 +84,11 @@ countries_dict = dict(zip(countries_map, countries))
 
 st.title('Welcome to Covid19 Forecast!')
 st.write("""**Explore the future of Covid19 by playing around with interactive plots and statistical time series modeling methods: FBProphet and ARIMA.**""")
-st.write("""**NOTE: This is the first release of this application, and there still may be some bugs, if you find any, please let me know via GitHub. All help appreciated :)**""")
+st.write("""**NOTE: Due to the way Prophet model was designed it's performance on some of the countries is very poor, for others though it works respectevily.
+Considering this I recomend trying out both models. From my experience Prophet may be better sometimes, but it is much more unstable when trained on a small dataset (Covid19 cases being a perfect example), 
+ARIMA on the other hand, isn't as precise, but it's results are much more stable.**
+
+This is the first release of this application, and there still may be some bugs, if you find any, please let me know via GitHub. All help appreciated :)""")
 st.markdown("For code <a href='https://github.com/ty-on-h12/covid19-timeseries'><b>check out my GitHub</b></a>", unsafe_allow_html=True)
 st.write('Forecast available for {} countries!'.format(len(countries_map)))
 usr_input = st.text_input('Check if a country is available', value='')
@@ -106,8 +111,8 @@ else:
 
 st.write("""*Period* represents week since a country began to collect Covid19 statistics, for example period 50 means 50th week. 
 **Forecasts range from the next week to the next 12 weeks, you can easily adjust the range with a slider below. 
-**Higher bounds are not provieded since forecasts have much lower accuracy over a long period of time.** 
-Data is spread on a **weekly** basis, meaning that each data point represents **sum** of either new or cummulative cases per week.""")
+Higher bounds are not provieded since forecasts have much lower accuracy over a long period of time.** 
+Data is spread on a **weekly** basis, meaning that each data point represents **sum** of either new or cumulative cases per week.""")
 period = st.slider('Select period', min_value=len(preprocessed), max_value=len(preprocessed)+12)
 
 st.title('Forcast for {}'.format(country))
@@ -160,7 +165,7 @@ else:
     # Plotly figure new
     preds = prophet(preprocessed, period)
     preds[0].history['y'] = np.exp(preds[0].history['y']) 
-    fig = plot_plotly(preds[0], preds[1], xlabel='Date', ylabel='New cases')
+    fig = plot_plotly(preds[0], preds[1], xlabel='', ylabel='')
     fig.update_layout(template='simple_white', width=750, height=450, margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
     fig.update_xaxes(rangeslider_visible=False)
     fig.update_traces({"line":{'width':1.5}})
@@ -169,7 +174,7 @@ else:
     # Plotly figure cummulative
     preds_cumulative = prophet(preprocessed_c, period, ys=False)
     preds_cumulative[0].history['y'] = np.exp(preds_cumulative[0].history['y'])     
-    fig_2 = plot_plotly(preds_cumulative[0], preds_cumulative[1], xlabel='Date', ylabel='Cummulative cases')
+    fig_2 = plot_plotly(preds_cumulative[0], preds_cumulative[1], xlabel='', ylabel='')
     fig_2.update_layout(template='simple_white', width=750, height=450, margin=dict(l=20, r=20, t=20, b=20), showlegend=False)
     fig_2.update_xaxes(rangeslider_visible=False)
     fig_2.update_traces({"line":{'width':1.5}})
@@ -235,7 +240,7 @@ else:
     Prophet uses several functions to produce results - $y(t)=g(t)+s(t)+h(t)+e(t)$ where:
     
     * $g(t)$ - Linear or logistic curve used for data modeling
-    * $s(t)$ - Seasonality yearly, weekly or daily changes
+    * $s(t)$ - Seasonality - yearly, weekly or daily changes
     * $h(t)$ - Effects of holiday
     * $e(t)$ - Error term, used in case of unusual data   
 
